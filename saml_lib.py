@@ -43,9 +43,9 @@ def verify(public_key, data: bytes, signature: bytes) -> bool:
 
 def c14n(xml: str) -> bytes:
     """XML文字列を正規化してバイト列で返す。
-    ヒント: ET.canonicalize(xml, strip_text=True) は str を返す → encode
+    ヒント: ET.canonicalize(xml) は str を返す → encode
     """
-    return ET.canonicalize(xml, strip_text=True).encode()
+    return ET.canonicalize(xml).encode()
     # raise NotImplementedError("Step 2: c14n")
 
 
@@ -126,6 +126,7 @@ def verify_assertion_signature(public_key, signed_xml: str) -> bool:
     2. SignedInfo を c14n して SignatureValue を公開鍵で verify
     ヒント: ET.fromstring でパース。取り除くのは ET の remove でよい。
     注意: 再シリアライズ(ET.tostring)すると名前空間の接頭辞が変わる。c14n は ET.canonicalize(from_file/xml_data) で通す。
+    注意: remove すると Signature の後ろの空白(tail)も消える。先に直前の要素の tail へ移す。
     """
     ET.register_namespace("", NS)
     root = ET.fromstring(signed_xml)
@@ -134,6 +135,9 @@ def verify_assertion_signature(public_key, signed_xml: str) -> bool:
     if sig is None:
         return False
 
+    # ponytail: Signature は Issuer の直後にしか入らない前提。先頭の子要素に来ると検証失敗になる
+    prev = list(root)[list(root).index(sig) - 1]
+    prev.tail = (prev.tail or "") + (sig.tail or "")
     root.remove(sig)
     digest = base64.b64encode(hashlib.sha256(c14n(ET.tostring(root, encoding="unicode"))).digest()).decode()
     digest_value = sig.find(f".//{{{DSIG}}}DigestValue").text
