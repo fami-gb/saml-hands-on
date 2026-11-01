@@ -3,7 +3,7 @@ import base64
 import html
 import json
 import os
-import uuid
+import secrets
 import zlib
 from datetime import datetime, timezone
 from urllib.parse import urlencode
@@ -22,14 +22,14 @@ app = Flask(__name__)
 app.secret_key = os.urandom(32)
 # localhost のCookieはポートが違っても共有されるので、名前をIdPとかぶらないようにする
 app.config["SESSION_COOKIE_NAME"] = "sp_session"
+app.after_request(s.no_cache)
 
-# ponytail: メモリ上で全ブラウザ共有。本番はリクエストIDをそのブラウザのセッションに紐づけ、期限付きで保存する
+# ponytail: メモリ上で全ブラウザ共有。第6回で要求 ID をブラウザごとのセッションに移す
 pending_request_ids, seen_assertion_ids = set(), set()
 
 
 def idp_metadata():
-    # ponytail: 毎回HTTPで取得している。本番はメタデータを事前に取り込んで固定する
-    # （この経路を差し替えられる人は、信頼する公開鍵を差し替えられる）
+    # ponytail: 毎回 HTTP で取得している。第6回で事前に取り込んだファイルに固定する
     with urlopen(IDP_METADATA) as r:
         return json.load(r)
 
@@ -47,7 +47,7 @@ def index():
 @app.get("/login")
 def login():
     md = idp_metadata()
-    req_id = "_" + uuid.uuid4().hex
+    req_id = "_" + secrets.token_hex(20)
     authn_request = (
         f'<samlp:AuthnRequest xmlns:samlp="{s.PROTO}" xmlns:saml="{s.NS}" ID="{req_id}" Version="2.0" '
         f'IssueInstant="{s._t(datetime.now(timezone.utc))}" Destination="{md["sso_url"]}" '

@@ -19,7 +19,7 @@ def make(key=priv, destination=ACS, **kw):
 def verify(xml, pending=None, seen=None):
     return s.verify_response(xml, idp_issuer=IDP, idp_public_key=pub, sp_entity_id=SP, acs_url=ACS,
                              pending_request_ids={"_req1"} if pending is None else pending,
-                             seen_assertion_ids=set() if seen is None else seen)
+                             seen_assertion_ids={} if seen is None else seen)
 
 
 def strip_signature(xml):
@@ -27,7 +27,7 @@ def strip_signature(xml):
 
 
 def replay():
-    xml, seen = make(), set()
+    xml, seen = make(), {}
     verify(xml, seen=seen)
     # 同じブラウザ／攻撃者が同じResponseを再送。InResponseTo のチェックだけでは
     # IdP起点SSO（InResponseToなし）を守れないので、pending を戻してリプレイ単体で確かめる
