@@ -3,7 +3,7 @@
 SAML の IdP と SP を、SAML ライブラリを使わずに Python で自作して理解するためのリポジトリです。
 ブログ連載「CSの基礎もままならないけど、SAMLを自作して理解してみる」のコードです。
 
-> **学習用です。本番では使わないでください。** XMLDSig は簡略版で、XXE 対策(defusedxml)などもしていません。
+> **学習用です。本番では使わないでください。** XMLDSig は簡略版で、正規化も Exclusive C14N の実装ではありません。他の IdP が作った XML での動作は確かめていません。
 
 ## 必要なもの
 
@@ -35,8 +35,11 @@ uv run --with cryptography check.py   # 最初に失敗したステップで止�
 
 ```sh
 uv run --with flask --with cryptography idp.py   # 別ターミナルで
+curl -s http://localhost:5000/metadata -o idp_metadata.json   # SP が信頼する公開鍵を取り込む
 uv run --with flask --with cryptography sp.py
 ```
+
+IdP の鍵は `idp_key.pem` に保存されます。消して作り直したら、メタデータも取り込み直してください。
 
 ブラウザで http://localhost:5001 を開き、alice / alice でログインします。
 
