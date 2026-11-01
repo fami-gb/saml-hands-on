@@ -13,10 +13,12 @@ def step1():
 
 
 def step2():
-    a = '<a y="2" x="1">  <b>hi</b>  </a>'
-    b = '<a x="1" y="2"><b>hi</b></a>'
-    assert s.c14n(a) == s.c14n(b), "属性順・空白が違うだけのXMLが一致しない"
-    assert s.c14n(a) != s.c14n(b.replace("hi", "HI")), "中身が違うのに一致してしまう"
+    a = '<a y="2" x="1"><b/></a>'
+    b = '<a x="1" y="2"><b></b></a>'
+    assert s.c14n(a) == s.c14n(b), "属性順・空要素の書き方が違うだけのXMLが一致しない"
+    c = '<a x="1"><b>hi</b></a>'
+    assert s.c14n(c) != s.c14n(c.replace("hi", "HI")), "中身が違うのに一致してしまう"
+    assert s.c14n(c) != s.c14n(c.replace("hi", " hi ")), "テキストの空白が消えている"
 
 
 def step3():
@@ -25,6 +27,7 @@ def step3():
     signed = s.sign_assertion(priv, xml)
     assert s.verify_assertion_signature(pub, signed), "正しい署名の検証が失敗する"
     assert not s.verify_assertion_signature(pub, signed.replace(">alice<", ">admin<")), "NameID改ざんが通ってしまう"
+    assert not s.verify_assertion_signature(pub, signed.replace(">alice<", "> alice <")), "NameIDの空白の改ざんが通ってしまう"
     _, other = s.generate_keypair()
     assert not s.verify_assertion_signature(other, signed), "別の鍵で通ってしまう"
 

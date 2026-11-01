@@ -33,7 +33,7 @@ def verify(public_key, data: bytes, signature: bytes) -> bool:
 
 def c14n(xml: str) -> bytes:
     """XML文字列を正規化してバイト列で返す。
-    ヒント: ET.canonicalize(xml, strip_text=True) は str を返す → encode
+    ヒント: ET.canonicalize(xml) は str を返す → encode
     """
     raise NotImplementedError("Step 2: c14n")
 
@@ -80,6 +80,7 @@ def verify_assertion_signature(public_key, signed_xml: str) -> bool:
     2. SignedInfo を c14n して SignatureValue を公開鍵で verify
     ヒント: ET.fromstring でパース。取り除くのは ET の remove でよい。
     注意: 再シリアライズ(ET.tostring)すると名前空間の接頭辞が変わる。c14n は ET.canonicalize(from_file/xml_data) で通す。
+    注意: remove すると Signature の後ろの空白(tail)も消える。先に直前の要素の tail へ移す。
     """
     raise NotImplementedError("Step 3: verify_assertion_signature")
 
